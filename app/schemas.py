@@ -18,10 +18,21 @@ class UserLogin(BaseModel):
     email : EmailStr
     password : str
 
-class UserInput(BaseModel):
-    weight: float
-    height: float
-    goal: str
+class UserRoom(BaseModel):
+    email: EmailStr
+ 
+class UserRoomOut(BaseModel):
+    id : int
+    name : str
+    
+    description : str
+    class Config:
+        orm_mode = True
+
+# class UserInput(BaseModel):
+#     weight: float
+#     height: float
+#     goal: str
 
 class Token(BaseModel):
     access_token: str

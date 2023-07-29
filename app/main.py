@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import models
 from database import engine
-from routers import user, auth, recommendations
+from routers import user, auth, room
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -23,7 +23,8 @@ models.Base.metadata.create_all(bind=engine)
 
 app.include_router(user.router)
 app.include_router(auth.router)
-app.include_router(recommendations.router)
+app.include_router(room.router)
+
 
 @app.get("/")
 async def root():
