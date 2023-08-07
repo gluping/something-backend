@@ -21,14 +21,18 @@ def get_user(id : int,db:Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-def create_user(user:schemas.UserCreate, db: Session= Depends(get_db)):
-
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    if user.password != user.confirm_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
+    
     hashed_password = utils.hash(user.password)
-    user.password = hashed_password
-
-    new_user = models.User(**user.dict())
+    user_dict = user.dict()
+    user_dict.pop("confirm_password")  # Remove the confirm_password field before creating the user
+    user_dict["password"] = hashed_password
+    
+    new_user = models.User(**user_dict)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
+    
     return new_user

@@ -9,7 +9,7 @@ router = APIRouter(
 )
 
 # Function to join a random room
-def join_random_room(user: schemas.UserRoom, db: Session):
+def join_random_room(user: schemas.UserRoom, db: Session,current_user: models.User = Depends(oauth2.get_current_user)):
     rooms = db.query(models.Room).filter(models.Room.current_participants < 5).all()
     user_model = db.query(models.User).filter(models.User.email == user.email).first()
     
@@ -18,17 +18,18 @@ def join_random_room(user: schemas.UserRoom, db: Session):
         new_room = models.Room(name="Random Room", description="Randomly created room", current_participants=1)
         db.add(new_room)
         db.commit()
-        user_model.room_id = new_room.id
+        user_model.joined_rooms.append(new_room)
+        # user_model.room_id = new_room.id
         db.commit()
         return new_room
 
     # Join an existing room with the fewest participants
     target_room = min(rooms, key=lambda r: r.current_participants)
     target_room.current_participants += 1
-    user_model.room_id = target_room.id
+    user_model.joined_rooms.append(target_room)
     db.commit()
     return target_room
 
 @router.post("/join_random_room/", response_model=schemas.UserRoomOut)
-def join_random_room_endpoint(user: schemas.UserRoom, db: Session = Depends(get_db)):
+def join_random_room_endpoint(user: schemas.UserRoom, db: Session = Depends(get_db),current_user: models.User = Depends(oauth2.get_current_user)):
     return join_random_room(user, db)

@@ -4,9 +4,12 @@ from database import engine
 from routers import user, auth, room
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+# from mangum import Mangum
 
 load_dotenv()
 app = FastAPI()
+# handler = Mangum(app)
+
 
 origins = ["*"]
 
