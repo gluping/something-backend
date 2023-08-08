@@ -32,3 +32,14 @@ class Room(Base):
 
     # Establishing the many-to-many relationship with User model
     participants = relationship("User", secondary=room_participants, back_populates="joined_rooms")
+    messages = relationship("Message", back_populates="room")
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    room_id = Column(Integer, ForeignKey("rooms.id"))
+
+    user = relationship("User", back_populates="messages")
+    room = relationship("Room", back_populates="messages")
