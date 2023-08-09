@@ -21,7 +21,7 @@ class User(Base):
 
     # Establishing the many-to-many relationship with Room model
     joined_rooms = relationship("Room", secondary=room_participants, back_populates="participants")
-
+    messages = relationship("Message", back_populates="user")
 class Room(Base):
     __tablename__ = "rooms"
 
