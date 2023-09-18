@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import models
 from database import engine
-from routers import user, auth, room
+from routers import user, auth
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 # from mangum import Mangum
@@ -26,7 +26,6 @@ models.Base.metadata.create_all(bind=engine)
 
 app.include_router(user.router)
 app.include_router(auth.router)
-app.include_router(room.router)
 
 
 @app.get("/")
