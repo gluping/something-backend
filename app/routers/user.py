@@ -27,7 +27,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     
     hashed_password = utils.hash(user.password)
     user_dict = user.dict()
-    user_dict.pop("confirm_password")  # Remove the confirm_password field before creating the user
+    user_dict.pop("confirm_password")  
     user_dict["password"] = hashed_password
     
     new_user = models.User(**user_dict)

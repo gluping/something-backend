@@ -19,6 +19,12 @@ class UserLogin(BaseModel):
     email : EmailStr
     password : str
 
+class ActivityProviderCreate(BaseModel):
+    business_name: str
+    contact_email: EmailStr
+    password: str
+    confirm_password: str
+
 
 class Token(BaseModel):
     access_token: str

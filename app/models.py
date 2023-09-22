@@ -13,3 +13,9 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
   
+class ActivityProvider(Base):
+    __tablename__ = "activity_providers"
+    id = Column(Integer, primary_key=True, nullable=False)
+    business_name = Column(String, nullable=False)
+    contact_email = Column(String, nullable=False, unique=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
