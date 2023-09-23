@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import models
 from database import engine
-from routers import user, auth,provider
+from routers import user, userauth, provider, providerauth
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 # from mangum import Mangum
@@ -25,9 +25,11 @@ app.add_middleware(
 models.Base.metadata.create_all(bind=engine)
 
 app.include_router(user.router)
-app.include_router(auth.router)
+app.include_router(userauth.router)
 
 app.include_router(provider.router)
+app.include_router(providerauth.router)
+
 
 
 

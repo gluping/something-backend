@@ -25,6 +25,12 @@ class ActivityProviderCreate(BaseModel):
     password: str
     confirm_password: str
 
+class ProviderOut(BaseModel):
+    id : int
+    contact_email : EmailStr
+    created_at : datetime
+    class Config:
+        orm_mode = True
 
 class Token(BaseModel):
     access_token: str

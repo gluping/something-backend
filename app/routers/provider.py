@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ActivityProviderCreate)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ProviderOut)
 def register_provider(provider: schemas.ActivityProviderCreate, db: Session = Depends(get_db)):
     if provider.password != provider.confirm_password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
