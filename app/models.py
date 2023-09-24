@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text, Table, ForeignKey
+from sqlalchemy import Column, Integer, String,Float, TIMESTAMP, text, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -20,3 +20,15 @@ class ActivityProvider(Base):
     contact_email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    activities = relationship("Activity", back_populates = "provider")
+
+class Activity(Base):
+    __tablename__="activity"
+    id = Column(Integer,primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+
+    provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable = False)
+    provider = relationship("ActivityProvider", back_populates = "activities")
