@@ -29,6 +29,7 @@ class Activity(Base):
     description = Column(String, nullable=False)
     location = Column(String, nullable=False)
     price = Column(Float, nullable=False)
+    image_url = Column(String)  # Store the URL of the uploaded image
 
     provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable = False)
     provider = relationship("ActivityProvider", back_populates = "activities")

@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 from fastapi import UploadFile
+from fastapi import Form, File
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -32,13 +33,18 @@ class ProviderOut(BaseModel):
     created_at : datetime
     class Config:
         orm_mode = True
-
+class Activity(BaseModel):
+    name:str
 class ActivityCreate(BaseModel):
     name: str
     description: str
-    location: str
-    price: float
-    image: UploadFile  # Handle image uploads
+    location: str 
+    price: float 
+
+class ActivityCreateWithImage(BaseModel):
+    activity: ActivityCreate
+    image: UploadFile
+
     # Add more fields as needed
 
 class Token(BaseModel):
