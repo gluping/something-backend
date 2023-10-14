@@ -33,17 +33,25 @@ class ProviderOut(BaseModel):
     created_at : datetime
     class Config:
         orm_mode = True
-class Activity(BaseModel):
-    name:str
-class ActivityCreate(BaseModel):
+
+class ActivityBase(BaseModel):
     name: str
     description: str
-    location: str 
-    price: float 
+    location: str
+    price: float
 
-class ActivityCreateWithImage(BaseModel):
-    activity: ActivityCreate
-    image: UploadFile
+class ActivityCreate(ActivityBase):
+    pass
+
+class UploadResponse(BaseModel):
+    url: str
+
+class Activity(ActivityBase):
+    id: int
+    image_url: str
+
+
+    
 
     # Add more fields as needed
 
