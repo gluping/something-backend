@@ -13,7 +13,7 @@ AWS_SERVER_SECRET_KEY = settings.AWS_SERVER_SECRET_KEY
 
 router = APIRouter(
     prefix="/createactivity",
-    tags=['Activity CREATE  ']
+    tags=['Activity Create']
 )
 
 
@@ -29,7 +29,7 @@ def upload_image(image: UploadFile):
         s3 = boto3.client('s3', aws_access_key_id=AWS_SERVER_PUBLIC_KEY, aws_secret_access_key=AWS_SERVER_SECRET_KEY, region_name='us-east-1')
         s3.upload_fileobj(image.file, "travelactivity", image.filename)
         image_url = f"https://travelactivity.s3.amazonaws.com/{image.filename}"
-        return {"url": image_url}
+        return schemas.UploadResponse(url=image_url)
     except NoCredentialsError:
         raise HTTPException(status_code=500, detail="Failed to upload image to S3")
 
@@ -37,9 +37,9 @@ def upload_image(image: UploadFile):
 
 def create_activity(
     activity: schemas.ActivityCreate,
-    image_url:str,
+    image_url: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.ActivityProvider = Depends(get_current_user)
 ):
 
     # Create a new activity record in the database
@@ -52,5 +52,12 @@ def create_activity(
     db.commit()
     db.refresh(new_activity)
 
-    return new_activity
+    response_activity = schemas.Activity(
+        **new_activity.__dict__
+    )
+
+    return response_activity
+
+
+
 
