@@ -39,12 +39,12 @@ def create_activity(
     activity: schemas.ActivityCreate,
     image_url: str,
     db: Session = Depends(get_db),
-    current_user: models.ActivityProvider = Depends(get_current_user)
+    current_provider: models.ActivityProvider = Depends(get_current_user)
 ):
 
     # Create a new activity record in the database
     activity_dict = activity.dict()
-    activity_dict["provider_id"] = current_user.id
+    activity_dict["provider_id"] = current_provider.id
     activity_dict["image_url"] = image_url  
 
     new_activity = models.Activity(**activity_dict)
