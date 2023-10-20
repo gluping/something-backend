@@ -28,16 +28,27 @@ def create_access_token(data: dict, token_type: str):
 def verify_access_token(token: str, credentials_exception):
 
     try:
-
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id: str = payload.get("user_id")
-        if id is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(id=id)
+        user_id = payload.get("user_id")
+        provider_id = payload.get("provider_id")
+        token_type = payload.get("type")
+
+        if token_type not in ["user", "provider"]:
+            raise credentials_exception  # Invalid token type
+
+        if token_type == "user":
+            if user_id is None:
+                raise credentials_exception
+            token_data = schemas.TokenData(id=user_id, type="user")
+        elif token_type == "provider":
+            if provider_id is None:
+                raise credentials_exception
+            token_data = schemas.TokenData(id=provider_id, type="provider")
     except JWTError:
         raise credentials_exception
 
     return token_data
+
 
 
 # def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
