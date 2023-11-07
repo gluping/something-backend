@@ -40,17 +40,22 @@ class ActivityBase(BaseModel):
     location: str
     price: float
 
+class ActivityCreateWithImageURL(ActivityBase):
+    image_url: str
+
 class ActivityCreate(ActivityBase):
     pass
 
 class UploadResponse(BaseModel):
     url: str
 
-class Activity(ActivityBase):
+class Activity(BaseModel):
     id: int
+    name: str
+    description: str
+    location: str
+    price: float
     image_url: str
-
-
     
 
     # Add more fields as needed
