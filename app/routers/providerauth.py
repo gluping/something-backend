@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 
-@router.post("/login-provider", response_model=schemas.Token)
+@router.post("/loginprovider", response_model=schemas.Token)
 def login_provider(provider_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
     provider = db.query(models.ActivityProvider).filter(models.ActivityProvider.contact_email == provider_credentials.username).first()
 
@@ -23,6 +23,6 @@ def login_provider(provider_credentials: OAuth2PasswordRequestForm = Depends(), 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
 
-    access_token_provider = create_access_token(data={"provider_id": provider.id}, token_type="provider")
+    access_token_provider = oauth2.create_access_token(data={"provider_id": provider.id})
 
     return {"access_token": access_token_provider, "token_type": "bearer"}  

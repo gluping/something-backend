@@ -1,7 +1,7 @@
 from fastapi import status, File, UploadFile, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 import models, schemas, utils
-from oauth2 import get_current_user
+from oauth2 import get_current_provider
 from database import get_db
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -32,7 +32,7 @@ def upload_image(image: UploadFile):
 def create_activity(
     request_data: schemas.ActivityCreateWithImageURL,  # Modify the schema to include image_url
     db: Session = Depends(get_db),
-    current_provider: models.User = Depends(get_current_user)
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
 ):
     # Extract the image_url from the request_data
     image_url = request_data.image_url
