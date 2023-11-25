@@ -15,7 +15,7 @@ class UserOut(BaseModel):
     email : EmailStr
     created_at : datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserLogin(BaseModel):
     email : EmailStr
@@ -32,7 +32,7 @@ class ProviderOut(BaseModel):
     contact_email : EmailStr
     created_at : datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ActivityBase(BaseModel):
     name: str
