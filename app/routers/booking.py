@@ -2,7 +2,7 @@ from fastapi import status, HTTPException,Depends, APIRouter
 from sqlalchemy.orm import Session
 import models, schemas, utils
 from database import get_db
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import Query
 
 router = APIRouter(
@@ -85,7 +85,7 @@ def book_activity(activity_id: int, start_time: str, end_time: str, db: Session 
             db.flush()  # Flush to get the booking ID before creating the payment
 
             # Create a payment record
-            payment = Payment(amount=activity.price, booking_id=booking.id)
+            payment = models.Payment(amount=activity.price, booking_id=booking.id)
             db.add(payment)
             db.commit()
 

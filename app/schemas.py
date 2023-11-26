@@ -50,6 +50,12 @@ class ActivityCreate(ActivityBase):
 class UploadResponse(BaseModel):
     url: str
 
+class TimeSlot(BaseModel):
+    id: int
+    start_time: datetime
+    end_time: datetime
+    is_available: bool
+
 class Activity(BaseModel):
     id: int
     name: str
@@ -57,6 +63,7 @@ class Activity(BaseModel):
     location: str
     price: float
     image_url: str
+    time_slots: List[TimeSlot]
 
 class TimeSlotBase(BaseModel):
     start_time: datetime
