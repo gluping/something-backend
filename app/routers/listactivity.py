@@ -24,6 +24,7 @@ def get_activities(db: Session = Depends(get_db)):
             "description": activity.description,
             "price": activity.price,
             "location": activity.location,
+            "image":activity.image_url,
         }
         activity_list.append(activity_details)
 

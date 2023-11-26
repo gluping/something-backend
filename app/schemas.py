@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import UploadFile
 from fastapi import Form, File
+from typing import List
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -56,6 +57,13 @@ class Activity(BaseModel):
     location: str
     price: float
     image_url: str
+
+class TimeSlotBase(BaseModel):
+    start_time: datetime
+    end_time: datetime
+
+class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
+    time_slots: List[TimeSlotBase]
     
 
     # Add more fields as needed
