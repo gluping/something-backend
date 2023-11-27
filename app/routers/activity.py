@@ -51,7 +51,8 @@ def create_activity(
 
     # Add time slots to the database
     for slot in time_slots:
-        time_slot = models.TimeSlot(**slot.dict(), activity_id=new_activity.id)
+        time_slot = models.TimeSlot(**slot.dict(),
+        activity_id=new_activity.id)
         db.add(time_slot)
 
     db.commit()

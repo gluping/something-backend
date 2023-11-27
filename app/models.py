@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String,Float, TIMESTAMP, text, Table, ForeignKey,DateTime, Boolean
+from sqlalchemy import Column, Integer, String,Float, TIMESTAMP, text, Table, ForeignKey,DateTime, Boolean, Time
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+
 
 Base = declarative_base()
 
@@ -41,8 +42,8 @@ class Activity(Base):
 class TimeSlot(Base):
     __tablename__ = "time_slots"
     id = Column(Integer, primary_key=True, nullable=False)
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)  # Corrected foreign key
     is_available = Column(Boolean, nullable=False, default=True)
     relatedactivity = relationship("Activity", back_populates="time_slots")
