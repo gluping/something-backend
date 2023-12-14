@@ -40,7 +40,10 @@ async def get_available_time_slots(
     )
 
     # Get available time slots for the selected date
-    available_time_slots = [slot for slot in all_time_slots if slot.id not in [booked[0] for booked in booked_time_slots]]
+    available_time_slots = [
+    slot for slot in all_time_slots 
+    if slot.id not in [booked[0] for booked in booked_time_slots] and slot.max_capacity - len(slot.bookings) > 0
+]
 
     return {"available_time_slots": available_time_slots}
 
