@@ -13,39 +13,37 @@ router = APIRouter(
 
 
 
-@router.get("/available-time-slots/{activity_id}")
-def get_available_time_slots(
+@router.get("/available_time_slots/{activity_id}")
+async def get_available_time_slots(
     activity_id: int,
-    date: str = Query(..., description="Selected date in the format YYYY-MM-DD"),
+    selected_date: str = Query(..., description="Selected date in YYYY-MM-DD format"),
     db: Session = Depends(get_db)
 ):
-    activity = db.query(models.Activity).get(activity_id)
+    try:
+        selected_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Convert the input date string to a datetime object
-    selected_date = datetime.strptime(date, "%Y-%m-%d")
+    # Get all time slots associated with the activity
+    all_time_slots = db.query(models.TimeSlot).filter(models.TimeSlot.activity_id == activity_id).all()
 
-    # Get all time slots for the activity that are available on the selected date
-    available_time_slots = (
-        db.query(models.TimeSlot)
-        .filter_by(activity_id=activity_id, is_available=True)
-        .filter(models.TimeSlot.start_time >= selected_date)
-        .filter(models.TimeSlot.end_time < (selected_date + timedelta(days=1)))
+    # Get booked time slots for the selected date
+    booked_time_slots = (
+        db.query(models.Booking.time_slot_id)
+        .join(models.TimeSlot)
+        .filter(models.TimeSlot.id.in_([slot.id for slot in all_time_slots]), models.Booking.activity_id == activity_id, models.Booking.created_at == selected_date)
         .all()
     )
 
-    # Convert the time slots to a format that can be easily consumed by the frontend
-    time_slots = [
-        {
-            "start_time": slot.start_time.isoformat(),
-            "end_time": slot.end_time.isoformat(),
-        }
-        for slot in available_time_slots
-    ]
+    # Get available time slots for the selected date
+    available_time_slots = [slot for slot in all_time_slots if slot.id not in [booked[0] for booked in booked_time_slots]]
 
-    return {"available_time_slots": time_slots}
+    return {"available_time_slots": available_time_slots}
+
 
 
 @router.post("{activity_id}/{start_time}/{end_time}")
