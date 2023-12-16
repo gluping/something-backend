@@ -36,7 +36,7 @@ class Activity(Base):
     provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable=False)
     provider = relationship("ActivityProvider", back_populates="activities")
     bookings = relationship("Booking", back_populates="activity")
-    time_slots = relationship("TimeSlot", back_populates="relatedactivity")
+    time_slots = relationship("TimeSlot", back_populates="related_activity")
 
 
 class TimeSlot(Base):
