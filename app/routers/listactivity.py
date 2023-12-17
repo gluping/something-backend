@@ -17,6 +17,15 @@ def get_activities(db: Session = Depends(get_db)):
 
     for activity in activities:
         provider = activity.provider
+        time_slots = [
+            {
+                "id": slot.id,
+                "start_time": slot.start_time,
+                "end_time": slot.end_time,
+                "is_available": slot.is_available,
+            }
+            for slot in activity.time_slots
+        ]
         activity_details = {
             "id": activity.id,
             "provider_name": provider.business_name,
@@ -25,6 +34,7 @@ def get_activities(db: Session = Depends(get_db)):
             "price": activity.price,
             "location": activity.location,
             "image":activity.image_url,
+            "time_slots": time_slots,
         }
         activity_list.append(activity_details)
 

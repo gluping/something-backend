@@ -45,6 +45,7 @@ class TimeSlot(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     max_capacity = Column(Integer, nullable=False)  
+    is_available: bool = True
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
     related_activity = relationship("Activity", back_populates="time_slots")
     bookings = relationship("Booking", back_populates="time_slot")

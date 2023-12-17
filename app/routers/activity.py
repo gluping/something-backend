@@ -75,6 +75,7 @@ def create_activity(
                 start_time=slot.start_time,
                 end_time=slot.end_time,
                 is_available=slot.is_available,
+                max_capacity=slot.max_capacity
             )
             for slot in new_activity_with_slots.time_slots
         ],

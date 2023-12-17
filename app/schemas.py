@@ -68,9 +68,11 @@ class Activity(BaseModel):
 class TimeSlotBase(BaseModel):
     start_time: Time
     end_time: Time
+    max_capacity: int
 
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
+
     
 
     # Add more fields as needed

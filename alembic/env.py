@@ -10,7 +10,7 @@ from app.models import Base
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
-    "sqlalchemy.url", 'postgresql://postgres:something@localhost:5432/bookactivity' )
+    "sqlalchemy.url", 'postgresql://postgres:youbitch@localhost:5432/bookactivity' )
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
