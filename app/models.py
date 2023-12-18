@@ -36,7 +36,7 @@ class Activity(Base):
     provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable=False)
     provider = relationship("ActivityProvider", back_populates="activities")
     bookings = relationship("Booking", back_populates="activity")
-    time_slots = relationship("TimeSlot", back_populates="relatedactivity")
+    time_slots = relationship("TimeSlot", back_populates="related_activity")
 
 
 class TimeSlot(Base):
@@ -45,6 +45,7 @@ class TimeSlot(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     max_capacity = Column(Integer, nullable=False)  
+    is_available: bool = True
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
     related_activity = relationship("Activity", back_populates="time_slots")
     bookings = relationship("Booking", back_populates="time_slot")
