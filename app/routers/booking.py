@@ -1,19 +1,9 @@
 from fastapi import status, HTTPException,Depends, APIRouter
-from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import models, schemas, utils
-from oauth2 import get_current_user
 from database import get_db
 from datetime import datetime, timedelta
 from fastapi import Query
-import razorpay
-from config import settings
-
-
-KEY_ID= settings.RAZORPAY_KEY_ID
-KEY_SECRET= settings.RAZORPAY_KEY_SECRET
-client = razorpay.Client(auth=(KEY_ID,KEY_SECRET))
-
 
 router = APIRouter(
     prefix="/book",
@@ -64,7 +54,7 @@ async def get_available_time_slots(
 
 
 @router.post("{activity_id}/{start_time}/{end_time}")
-def book_activity(activity_id: int, start_time: str, end_time: str, db: Session = Depends(get_db),current_user: models.User= Depends(get_current_user)):
+def book_activity(activity_id: int, start_time: str, end_time: str, db: Session = Depends(get_db)):
     activity = db.query(models.Activity).get(activity_id)
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
@@ -95,37 +85,19 @@ def book_activity(activity_id: int, start_time: str, end_time: str, db: Session 
             time_slot.is_available = False
 
             # Create a booking record
-            booking = models.Booking(activity_id=activity_id, start_time=start_time, end_time=end_time, user_id=current_user.id,payment_id=None)
+            booking = models.Booking(activity_id=activity_id, start_time=start_time, end_time=end_time, user_id=current_user.id)
             db.add(booking)
             db.flush()  # Flush to get the booking ID before creating the payment
 
             # Create a payment record
-            razorpay_order = create_order(activity.price * 100, activity_id)
-            payment = models.Payment(amount=activity.price, status="Pending", order_id=razorpay_order['id'], booking_id=booking.id)
-            db.add(payment)
-            
+            payment = models.Payment(amount=activity.price, booking_id=booking.id)
             db.add(payment)
             db.commit()
-            return redirect_to_payment(razorpay_order['id'])
 
         # Return a success message
-        
+        return {"message": "Activity booked successfully"}
 
     except Exception as e:
         # Roll back the transaction in case of an error
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-def create_order(amount, activity_id):
-    data = {
-        "amount": amount,
-        "currency": "INR",
-        "receipt": f"order_receipt_{activity_id}",  # Use a unique identifier for each order
-        "payment_capture": 1  # Auto-capture payment when the order is created
-    }
-    order = client.order.create(data=data)
-    return order
-
-def redirect_to_payment(order_id):
-    payment_url = f"https://api.razorpay.com/v1/checkout/embedded/{order_id}"
-    return RedirectResponse(payment_url)
