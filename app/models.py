@@ -56,8 +56,10 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     amount = Column(Float, nullable=False)
     status = Column(String, nullable=False, default="Pending")
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)  
    
     booking = relationship("Booking", back_populates="payment")
+
 
 
 class Booking(Base):
