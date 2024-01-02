@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
     AWS_SERVER_PUBLIC_KEY: str
     AWS_SERVER_SECRET_KEY: str
+    RAZORPAY_KEY_ID: str
+    RAZORPAY_KEY_SECRET: str
 
 
     class Config:
