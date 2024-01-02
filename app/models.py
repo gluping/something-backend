@@ -56,9 +56,8 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     amount = Column(Float, nullable=False)
     status = Column(String, nullable=False, default="Pending")
-    booking_id = Column(Integer, ForeignKey("bookings.id"),nullable=False)
-    booking = relationship("Booking", back_populates="payment")
-
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    bookings = relationship("Booking", back_populates="payments")
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -66,10 +65,12 @@ class Booking(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
     time_slot_id = Column(Integer, ForeignKey("time_slots.id"), nullable=False)
-    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
     user = relationship("User", back_populates="bookings")
     activity = relationship("Activity", back_populates="bookings")
     time_slot = relationship("TimeSlot", back_populates="bookings")
-    payment = relationship("Payment", back_populates="booking")
+    payments = relationship("Payment", back_populates="bookings")
+
+
+
