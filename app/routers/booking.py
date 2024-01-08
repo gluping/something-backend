@@ -1,11 +1,13 @@
 from fastapi import status, HTTPException,Depends, APIRouter
-from fastapi.responses import RedirectResponse
+
+from starlette.responses import RedirectResponse
+
 from sqlalchemy.orm import Session
 import models, schemas, utils
 from database import get_db
 from datetime import datetime, timedelta
 from fastapi import Query
-from oauth2 import get_current_user
+from oauth2 import get_current_user, get_current_provider
 from config import settings
 import razorpay
 
@@ -61,25 +63,28 @@ async def get_available_time_slots(
 
 
 
-@router.post("{activity_id}/{start_time}/{end_time}")
-def book_activity(activity_id: int, start_time: str, end_time: str, db: Session = Depends(get_db),current_user: models.ActivityProvider = Depends(get_current_user)):
+@router.post("/")
+def book_activity(
+    activity_id: int = Query(..., description="Activity ID"),
+    slot_id: int = Query(..., description="Slot ID"),   
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+    ):
+ 
     activity = db.query(models.Activity).get(activity_id)
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
-    end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
-
     try:
         # Start a transaction
-        with db.begin():
+        if not db.is_active:
+            db.begin()
             # Check if the selected time slot is available
             time_slot = (
                 db.query(models.TimeSlot)
                 .filter_by(
                     activity_id=activity_id,
-                    start_time=start_time,
-                    end_time=end_time,
+                    id=slot_id,
                     is_available=True
                 )
                 .with_for_update()
@@ -94,11 +99,12 @@ def book_activity(activity_id: int, start_time: str, end_time: str, db: Session 
 
             # Create a booking record
             booking = models.Booking(
-            activity_id=activity_id,
-            start_time=start_time,
-            end_time=end_time,
-            user_id=current_user.id,
-            payment_id=None  # Initially set to None
+                activity_id=activity_id,
+                time_slot_id=slot_id,
+                start_time=time_slot.start_time,
+                end_time=time_slot.end_time,
+                user_id=current_user.id,
+                payment_id=None  # Initially set to None
 )
             db.add(booking)
             db.flush()  # Flush to get the booking ID before creating the payment
@@ -115,11 +121,12 @@ def book_activity(activity_id: int, start_time: str, end_time: str, db: Session 
     except Exception as e:
         # Roll back the transaction in case of an error
         db.rollback()
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
 def create_order(amount, activity_id):
     data = {
-        "amount": amount,
+        "amount": amount,   
         "currency": "INR",
         "receipt": f"order_receipt_{activity_id}",  # Use a unique identifier for each order
         "payment_capture": 1  # Auto-capture payment when the order is created
@@ -130,4 +137,4 @@ def create_order(amount, activity_id):
 # Add the following function to redirect to the Razorpay payment page
 def redirect_to_payment(order_id):
     payment_url = f"https://api.razorpay.com/v1/checkout/embedded/{order_id}"
-    return RedirectResponse(payment_url)
+    return RedirectResponse(payment_url)    

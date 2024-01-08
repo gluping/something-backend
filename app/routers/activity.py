@@ -35,7 +35,7 @@ def create_activity(
     db: Session = Depends(get_db),
     current_provider: models.ActivityProvider = Depends(get_current_provider)
 ):
-    # Extract the image_url and time_slots from the request_data
+    
     image_url = request_data.image_url
     time_slots = request_data.time_slots
 
