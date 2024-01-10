@@ -7,7 +7,7 @@ import models, schemas, utils
 from database import get_db
 from datetime import datetime, timedelta
 from fastapi import Query
-from oauth2 import get_current_user, get_current_provider
+from oauth2 import get_current_user
 from config import settings
 import razorpay
 
@@ -65,13 +65,12 @@ async def get_available_time_slots(
 
 @router.post("/")
 def book_activity(
-    activity_id: int = Query(..., description="Activity ID"),
-    slot_id: int = Query(..., description="Slot ID"),   
+    request_data:schemas.Booking,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
     ):
  
-    activity = db.query(models.Activity).get(activity_id)
+    activity = db.query(models.Activity).get(request_data.activity_id)
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -83,8 +82,8 @@ def book_activity(
             time_slot = (
                 db.query(models.TimeSlot)
                 .filter_by(
-                    activity_id=activity_id,
-                    id=slot_id,
+                    activity_id=request_data.activity_id,
+                    id=request_data.slot_id,
                     is_available=True
                 )
                 .with_for_update()
@@ -99,8 +98,8 @@ def book_activity(
 
             # Create a booking record
             booking = models.Booking(
-                activity_id=activity_id,
-                time_slot_id=slot_id,
+                activity_id=request_data.activity_id,
+                time_slot_id=request_data.slot_id,
                 start_time=time_slot.start_time,
                 end_time=time_slot.end_time,
                 user_id=current_user.id,
@@ -110,7 +109,7 @@ def book_activity(
             db.flush()  # Flush to get the booking ID before creating the payment
 
             # Create a payment record
-            razorpay_order = create_order(activity.price * 100, activity_id)  
+            razorpay_order = create_order(activity.price * 100, request_data.activity_id)  
             payment = models.Payment(amount=activity.price, status="Pending", order_id=razorpay_order['id'], booking_id=booking.id)
             db.add(payment)
             db.commit()

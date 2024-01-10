@@ -70,6 +70,10 @@ class TimeSlotBase(BaseModel):
     end_time: Time
     max_capacity: int
 
+class Booking(BaseModel):
+    activity_id: int
+    slot_id: int
+
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
 
@@ -83,5 +87,5 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
+    id: int
 
