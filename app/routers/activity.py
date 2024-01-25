@@ -69,6 +69,7 @@ def create_activity(
         location=new_activity_with_slots.location,
         price=new_activity_with_slots.price,
         image_url=new_activity_with_slots.image_url,
+        provider_id=current_provider.id,
         time_slots=[
             schemas.TimeSlot(
                 id=slot.id,

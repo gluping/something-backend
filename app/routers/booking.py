@@ -65,64 +65,43 @@ async def get_available_time_slots(
 
 @router.post("/")
 def book_activity(
-    request_data:schemas.Booking,
+    request_data: schemas.Booking,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
-    ):
- 
+):
     activity = db.query(models.Activity).get(request_data.activity_id)
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
     try:
-        # Start a transaction
-        if not db.is_active:
-            db.begin()
-            # Check if the selected time slot is available
-            time_slot = (
-                db.query(models.TimeSlot)
-                .filter_by(
-                    activity_id=request_data.activity_id,
-                    id=request_data.slot_id,
-                    is_available=True
-                )
-                .with_for_update()
-                .first()
-            )
-
-            if not time_slot:
-                raise HTTPException(status_code=400, detail="Selected time slot not available")
-
-            # Update the availability of the time slot
-            time_slot.is_available = False
-
-            # Create a booking record
+        db.commit()
+        with db.begin():
+           
             booking = models.Booking(
                 activity_id=request_data.activity_id,
                 time_slot_id=request_data.slot_id,
-                start_time=time_slot.start_time,
-                end_time=time_slot.end_time,
                 user_id=current_user.id,
-                payment_id=None  # Initially set to None
-)
+                booking_date= request_data.booking_date,
+                payment_id=None
+            )
             db.add(booking)
             db.flush()  # Flush to get the booking ID before creating the payment
-
             # Create a payment record
-            razorpay_order = create_order(activity.price * 100, request_data.activity_id)  
+            razorpay_order = create_order(activity.price * 100, request_data.activity_id)
+            print(razorpay_order)
             payment = models.Payment(amount=activity.price, status="Pending", order_id=razorpay_order['id'], booking_id=booking.id)
             db.add(payment)
-            db.commit()
-            
-        # Return a success message
-            return redirect_to_payment(razorpay_order['id'])
 
+            
     except Exception as e:
         # Roll back the transaction in case of an error
         db.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
+
+    return razorpay_order['id']
+
+
 def create_order(amount, activity_id):
     data = {
         "amount": amount,   
@@ -133,7 +112,3 @@ def create_order(amount, activity_id):
     order = client.order.create(data=data)
     return order
 
-# Add the following function to redirect to the Razorpay payment page
-def redirect_to_payment(order_id):
-    payment_url = f"https://api.razorpay.com/v1/checkout/embedded/{order_id}"
-    return RedirectResponse(payment_url)    

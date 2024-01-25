@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime,time as Time
+from datetime import datetime,time as Time, date
 from typing import Optional
 from fastapi import UploadFile
 from fastapi import Form, File
@@ -58,6 +58,7 @@ class TimeSlot(BaseModel):
 
 class Activity(BaseModel):
     id: int
+    provider_id: int
     name: str
     description: str
     location: str
@@ -73,6 +74,7 @@ class TimeSlotBase(BaseModel):
 class Booking(BaseModel):
     activity_id: int
     slot_id: int
+    booking_date: date
 
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
