@@ -70,6 +70,7 @@ def create_activity(
         price=new_activity_with_slots.price,
         image_url=new_activity_with_slots.image_url,
         provider_id=current_provider.id,
+        likes=new_activity_with_slots.likes,
         time_slots=[
             schemas.TimeSlot(
                 id=slot.id,
@@ -85,3 +86,25 @@ def create_activity(
     return response_activity
 
 
+@router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_activity(
+    activity_id: int,
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    # Check if the activity exists and is owned by the current provider
+    activity = db.query(models.Activity).filter(
+        models.Activity.id == activity_id,
+        models.Activity.provider_id == current_provider.id
+    ).first()
+
+    db.query(models.TimeSlot).filter(models.TimeSlot.activity_id == activity_id).delete()
+
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    # Delete the activity
+    db.delete(activity)
+    db.commit()
+
+    return {"message": "Activity deleted successfully"}

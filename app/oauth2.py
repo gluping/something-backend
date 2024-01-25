@@ -77,4 +77,3 @@ def get_current_provider(token: str = Depends(oauth2_scheme_provider), db: Sessi
     provider = db.query(models.ActivityProvider).filter(models.ActivityProvider.id == token.id).first()
 
     return provider
-    
