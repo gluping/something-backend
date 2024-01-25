@@ -1,5 +1,7 @@
+from typing import List
 from fastapi import status, HTTPException,Depends, APIRouter
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from oauth2 import get_current_provider
 import models, schemas, utils
 from database import get_db
 
@@ -26,3 +28,80 @@ def register_provider(provider: schemas.ActivityProviderCreate, db: Session = De
     db.refresh(new_provider)
     
     return new_provider
+
+
+def activity_to_dict(activity):
+    return {
+        "id": activity.id,
+        "name": activity.name,
+        "duration": activity.location,
+        "description": activity.description,
+        "location": activity.location,
+        "price": activity.price,
+        "image_url": activity.image_url,
+        "time_slots": [
+            {
+                "id": slot.id,  
+                "is_available": slot.is_available,  
+                "start_time": slot.start_time,
+                "end_time": slot.end_time,
+            }
+            for slot in activity.time_slots
+        ],
+        "likes": activity.likes,
+        
+    }
+@router.get("/{provider_id}/activities", response_model=schemas.ProviderWithActivitiesOut)
+def get_provider_activities(provider_id: int, db: Session = Depends(get_db)):
+    
+    provider = (
+        db.query(models.ActivityProvider)
+        .options(joinedload(models.ActivityProvider.activities))
+        .filter(models.ActivityProvider.id == provider_id)
+        .first()
+    )
+
+    if provider is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found")
+
+    # Convert SQLAlchemy models to dictionaries
+    activities_dict_list = [activity_to_dict(activity) for activity in provider.activities]
+
+    # Use Pydantic model for the response
+    response_model = schemas.ProviderWithActivitiesOut(
+        id=provider.id,
+        contact_email=provider.contact_email,
+        created_at=provider.created_at,
+        activities=activities_dict_list,
+    )
+
+    return response_model
+
+@router.get("/bookings", response_model=List[schemas.BookingOut])
+def get_provider_bookings(current_provider: models.ActivityProvider = Depends(get_current_provider), db: Session = Depends(get_db)):
+    
+    provider_bookings = db.query(models.Booking).join(models.Activity)\
+        .filter(models.Activity.provider_id == current_provider.id)\
+        .options(joinedload(models.Booking.activity)).all()
+
+    
+    booking_details = [
+        schemas.BookingOut(
+            id=booking.id,
+            activity_id=booking.activity_id,
+            user_email=booking.user_email,
+            booking_time=booking.booking_time,
+            activity_details=schemas.ActivityOut(
+                id=booking.activity.id,
+                name=booking.activity.name,
+                description=booking.activity.description,
+                location=booking.activity.location,
+                price=booking.activity.price,
+                image_url=booking.activity.image_url,
+                time_slots=[],
+            )
+        )
+        for booking in provider_bookings
+    ]
+
+    return booking_details

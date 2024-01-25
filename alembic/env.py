@@ -10,7 +10,8 @@ from app.models import Base
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
-    "sqlalchemy.url", 'postgresql://postgres:test123@localhost:5432/devmode' )
+    "sqlalchemy.url", 'postgresql://postgres:admin123@localhost:5432/devmode' )
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
