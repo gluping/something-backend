@@ -32,7 +32,7 @@ def verify_access_token_user(token: str, credentials_exception):
     try:
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id = str(payload.get("user_id"))
+        id = payload.get("user_id")
         if id is None:
             raise credentials_exception
         token_data = schemas.TokenData(id=id)
@@ -46,7 +46,7 @@ def verify_access_token_provider(token: str, credentials_exception):
     try:
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id = str(payload.get("provider_id"))
+        id = payload.get("provider_id")
         if id is None:
             raise credentials_exception
         token_data = schemas.TokenData(id=id)
@@ -76,4 +76,3 @@ def get_current_provider(token: str = Depends(oauth2_scheme_provider), db: Sessi
     provider = db.query(models.ActivityProvider).filter(models.ActivityProvider.id == token.id).first()
 
     return provider
-    
