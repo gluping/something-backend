@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from schemas import ActivityResponse
 from database import get_db
 from models import Activity
 
@@ -8,7 +9,6 @@ router = APIRouter(
     prefix="/listactivity",
     tags=['Activity List']
 )
-
 
 @router.get("/activities/")
 def get_activities(db: Session = Depends(get_db)):

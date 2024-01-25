@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime,time as Time
-from typing import Optional
+from datetime import datetime,time as Time, date
+from typing import Dict, Optional, Union
+
 from fastapi import UploadFile
 from fastapi import Form, File
 from typing import List
@@ -58,17 +59,24 @@ class TimeSlot(BaseModel):
 
 class Activity(BaseModel):
     id: int
+    provider_id: int
     name: str
     description: str
     location: str
     price: float
     image_url: str
     time_slots: List[TimeSlot]
+    likes: int 
 
 class TimeSlotBase(BaseModel):
     start_time: Time
     end_time: Time
     max_capacity: int
+
+class Booking(BaseModel):
+    activity_id: int
+    slot_id: int
+    booking_date: date
 
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
@@ -83,5 +91,23 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
+    id: int
+class ProviderWithActivitiesOut(ProviderOut):
+    activities: List[Activity]
 
+class BookingOut(BaseModel):
+    id: int
+    activity_id: int
+    user_email: EmailStr
+    booking_time: datetime
+    activity_details: Activity
+
+class ActivityResponse(BaseModel):
+    id: int
+    provider_name: str
+    name: str
+    description: str
+    price: float
+    location: str
+    image: str
+    time_slots: List[Dict[str, Union[int, str, bool]]]

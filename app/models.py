@@ -13,6 +13,8 @@ class User(Base):
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     bookings = relationship("Booking", back_populates="user")
+    liked_activities = relationship("UserLikes", back_populates="user")
+
 
   
 class ActivityProvider(Base):
@@ -25,18 +27,20 @@ class ActivityProvider(Base):
     activities = relationship("Activity", back_populates="provider")
 
 class Activity(Base):
-    __tablename__="activities"  # Corrected table name
+    __tablename__ = "activities"
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
     location = Column(String, nullable=False)
     price = Column(Float, nullable=False)
-    image_url = Column(String)  # Store the URL of the uploaded image
-
+    image_url = Column(String)
     provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable=False)
     provider = relationship("ActivityProvider", back_populates="activities")
     bookings = relationship("Booking", back_populates="activity")
     time_slots = relationship("TimeSlot", back_populates="related_activity")
+    likes = Column(Integer, default=0)  # New field for likes
+    liked_by_users = relationship("UserLikes", back_populates="activity")
+
 
 
 class TimeSlot(Base):
@@ -56,9 +60,10 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     amount = Column(Float, nullable=False)
     status = Column(String, nullable=False, default="Pending")
-   
-    booking = relationship("Booking", back_populates="payment")
-
+    order_id = Column(String, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    bookings = relationship("Booking", back_populates="payments")
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -66,10 +71,21 @@ class Booking(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
     time_slot_id = Column(Integer, ForeignKey("time_slots.id"), nullable=False)
-    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
-
+    booking_date = Column(Date, nullable=False)
+    payment_id = Column(Integer), ForeignKey("payments.id")
     user = relationship("User", back_populates="bookings")
     activity = relationship("Activity", back_populates="bookings")
     time_slot = relationship("TimeSlot", back_populates="bookings")
-    payment = relationship("Payment", back_populates="booking")
+    payments = relationship("Payment", back_populates="bookings")
+
+class UserLikes(Base):
+    __tablename__ = "user_likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+
+    # Define relationships
+    user = relationship("User", back_populates="liked_activities")
+    activity = relationship("Activity", back_populates="liked_by_users")
