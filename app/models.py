@@ -35,10 +35,10 @@ class Activity(Base):
     price = Column(Float, nullable=False)
     image_url = Column(String)
     provider_id = Column(Integer, ForeignKey("activity_providers.id"), nullable=False)
+    likes = Column(Integer, default=0) 
     provider = relationship("ActivityProvider", back_populates="activities")
     bookings = relationship("Booking", back_populates="activity")
     time_slots = relationship("TimeSlot", back_populates="related_activity")
-    likes = Column(Integer, default=0)  # New field for likes
     liked_by_users = relationship("UserLikes", back_populates="activity")
 
 

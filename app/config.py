@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+from pathlib import Path
 
 class Settings(BaseSettings):
     database_hostname: str
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
 
     class Config:
-        env_file = ".env"
+        env_file = Path("/home/lex/something-backend/.env")
 
 
-settings = Settings(_env_file=".env", _env_file_encoding="utf-8")
+settings = Settings(_env_file=Path("/home/lex/something-backend/.env"), _env_file_encoding="utf-8")
