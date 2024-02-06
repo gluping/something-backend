@@ -43,13 +43,13 @@ class ActivityBase(BaseModel):
     price: float
 
 class ActivityCreateWithImageURL(ActivityBase):
-    image_url: str
+    image_url: List[str]
 
 class ActivityCreate(ActivityBase):
     pass
 
 class UploadResponse(BaseModel):
-    url: str
+    url: List[str]
 
 class TimeSlot(BaseModel):
     id: int
