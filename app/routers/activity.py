@@ -1,6 +1,8 @@
 from fastapi import status, File, UploadFile, HTTPException, Depends, APIRouter
 from typing import List
 from sqlalchemy.orm import Session,joinedload
+from es_utils import get_es_client
+from .search import index_activity
 import models, schemas, utils
 from oauth2 import get_current_provider
 from database import get_db
@@ -50,18 +52,17 @@ def upload_images(images: List[UploadFile]):
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Activity)
 def create_activity(
-    request_data: schemas.ActivityCreateWithImageURLAndTimeSlots,  # Modify the schema to include time_slots
+    request_data: schemas.ActivityCreateWithImageURLAndTimeSlots,
     db: Session = Depends(get_db),
     current_provider: models.ActivityProvider = Depends(get_current_provider)
 ):
-    
     image_url = request_data.image_url
     time_slots = request_data.time_slots
 
     # Create a new activity record in the database
-    activity_dict = request_data.dict(exclude={"image_url", "time_slots"})  # Exclude image_url and time_slots from activity fields
+    activity_dict = request_data.dict(exclude={"image_url", "time_slots"})
     activity_dict["provider_id"] = current_provider.id
-    activity_dict["image_url"] = image_url  
+    activity_dict["image_url"] = image_url
 
     new_activity = models.Activity(**activity_dict)
     db.add(new_activity)
@@ -70,8 +71,7 @@ def create_activity(
 
     # Add time slots to the database
     for slot in time_slots:
-        time_slot = models.TimeSlot(**slot.dict(),
-        activity_id=new_activity.id)
+        time_slot = models.TimeSlot(**slot.dict(), activity_id=new_activity.id)
         db.add(time_slot)
 
     db.commit()
@@ -102,7 +102,12 @@ def create_activity(
         ],
     )
 
+    # Update Elasticsearch index
+    es_client = get_es_client()
+    index_activity(es_client, response_activity.dict())  # Index the new activity
+
     return response_activity
+
 
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
