@@ -30,7 +30,8 @@ def search_activities(es_client, query):
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["name", "location", "description"]
+                    "fields": ["name", "location", "description"],
+                    "fuzziness": "AUTO"  # Enable fuzzy matching
                 }
             }
         }
