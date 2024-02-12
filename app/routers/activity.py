@@ -104,8 +104,7 @@ def create_activity(
 
     # Update Elasticsearch index
     es_client = get_es_client()
-    index_activity(es_client, response_activity.dict())  # Index the new activity
-
+    index_activity(es_client, response_activity)  # Pass the Activity object directly
     return response_activity
 
 

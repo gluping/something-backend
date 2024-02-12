@@ -56,7 +56,7 @@ router = APIRouter(
 async def search_endpoint(query: str):
     try:
         # Perform search
-        results = search_activities(query)
+        results = search_activities(es_client, query)  # Pass es_client argument
         return results
     except Exception as e:
         # Log the error and raise an HTTPException with a 500 status code
