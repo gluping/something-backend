@@ -10,7 +10,7 @@ def get_es_client():
         "https://500328854aa34cfdb32aa3cfa721b8ee.us-central1.gcp.cloud.es.io:443",
 
 
-        api_key=("LfJEXo0Bg8CCZaeSTZCE", "ucE90FGPTNmGjHjkvTEiag")
+        api_key=()
 
     )
 
