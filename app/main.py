@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import models
 from database import engine
-from routers import user, userauth, provider, providerauth, activity, listactivity, booking, like
+from routers import user, userauth, provider, providerauth, activity, listactivity, booking, like, search
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 # from mangum import Mangum
@@ -33,6 +33,7 @@ app.include_router(activity.router)
 app.include_router(listactivity.router)
 app.include_router(booking.router)
 app.include_router(like.router)
+app.include_router(search.router)
 
 
 

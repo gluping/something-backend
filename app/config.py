@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
 
     class Config:
-        env_file = Path("/home/lex/something-backend/.env")
+        env_file = Path("/home/binns/Desktop/something-backend/.env")
 
 
-settings = Settings(_env_file=Path("/home/lex/something-backend/.env"), _env_file_encoding="utf-8")
+settings = Settings(_env_file=Path("/home/binns/Desktop/something-backend/.env"), _env_file_encoding="utf-8")
