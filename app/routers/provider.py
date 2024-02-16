@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import status, HTTPException,Depends, APIRouter
+from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from oauth2 import get_current_provider
 import models, schemas, utils
@@ -105,3 +106,17 @@ def get_provider_bookings(current_provider: models.ActivityProvider = Depends(ge
     ]
 
     return booking_details
+
+
+@router.post("/done/{booking_id}")
+
+def activity_completed(booking_id:int,current_provider: models.ActivityProvider = Depends(get_current_provider),db: Session = Depends(get_db)):
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if booking is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+    if booking.activity.provider_id != current_provider.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the provider of this activity")
+    booking.is_completed = True
+    db.commit()
+    db.refresh(booking)
+    db
