@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import status, HTTPException,Depends, APIRouter
+from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from oauth2 import get_current_provider
 import models, schemas, utils
@@ -82,26 +83,52 @@ def get_provider_bookings(current_provider: models.ActivityProvider = Depends(ge
     
     provider_bookings = db.query(models.Booking).join(models.Activity)\
         .filter(models.Activity.provider_id == current_provider.id)\
-        .options(joinedload(models.Booking.activity)).all()
+        .options(
+            joinedload(models.Booking.activity),
+        ).all()
 
-    
     booking_details = [
         schemas.BookingOut(
-            id=booking.id,
+            booking_id=booking.id,
             activity_id=booking.activity_id,
-            user_email=booking.user_email,
-            booking_time=booking.booking_time,
-            activity_details=schemas.ActivityOut(
+            user_email=booking.user.email,
+            user_id=booking.user_id,
+            activity_details=schemas.ActivityProviderOut(
                 id=booking.activity.id,
                 name=booking.activity.name,
                 description=booking.activity.description,
                 location=booking.activity.location,
                 price=booking.activity.price,
                 image_url=booking.activity.image_url,
-                time_slots=[],
-            )
+                likes = booking.activity.likes,
+                time_slots=[
+                    {
+                        "start_time": time_slot.start_time,
+                        "end_time": time_slot.end_time,
+                    
+                    }
+                    for time_slot in booking.activity.time_slots
+                ]
+            ),
+            booking_date=booking.booking_date,
+            is_completed=booking.is_completed
         )
         for booking in provider_bookings
     ]
 
     return booking_details
+
+
+@router.post("/done/{booking_id}")
+
+def activity_completed(booking_id:int,current_provider: models.ActivityProvider = Depends(get_current_provider),db: Session = Depends(get_db)):
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if booking is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+    if booking.activity.provider_id != current_provider.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the provider of this activity")
+    booking.is_completed = True
+    return ("Succesfully marked the activity as completed")
+    db.commit()
+    db.refresh(booking)
+    db

@@ -43,20 +43,25 @@ class ActivityBase(BaseModel):
     price: float
 
 class ActivityCreateWithImageURL(ActivityBase):
-    image_url: str
+    image_url: List[str]
 
 class ActivityCreate(ActivityBase):
     pass
 
 class UploadResponse(BaseModel):
-    url: str
+    url: List[str]
 
 class TimeSlot(BaseModel):
     id: int
     start_time: Time
     end_time: Time
     is_available: bool
+    max_capacity:int
 
+class TimeSlotProvider(BaseModel):
+    start_time: Time
+    end_time: Time
+    
 class Activity(BaseModel):
     id: int
     provider_id: int
@@ -66,6 +71,16 @@ class Activity(BaseModel):
     price: float
     image_url: str
     time_slots: List[TimeSlot]
+    likes: int
+
+class ActivityProviderOut(BaseModel):
+    id: int
+    name: str
+    description: str
+    location: str
+    price: float
+    image_url: str
+    time_slots: List[TimeSlotProvider]
     likes: int 
 
 class TimeSlotBase(BaseModel):
@@ -80,6 +95,7 @@ class Booking(BaseModel):
 
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
+
 
     
 
@@ -96,12 +112,12 @@ class ProviderWithActivitiesOut(ProviderOut):
     activities: List[Activity]
 
 class BookingOut(BaseModel):
-    id: int
+    booking_id: int
     activity_id: int
     user_email: EmailStr
-    booking_time: datetime
-    activity_details: Activity
-
+    booking_date: datetime
+    activity_details: ActivityProviderOut
+    is_completed: bool
 class ActivityResponse(BaseModel):
     id: int
     provider_name: str
