@@ -56,7 +56,12 @@ class TimeSlot(BaseModel):
     start_time: Time
     end_time: Time
     is_available: bool
+    max_capacity:int
 
+class TimeSlotProvider(BaseModel):
+    start_time: Time
+    end_time: Time
+    
 class Activity(BaseModel):
     id: int
     provider_id: int
@@ -66,6 +71,16 @@ class Activity(BaseModel):
     price: float
     image_url: str
     time_slots: List[TimeSlot]
+    likes: int
+
+class ActivityProviderOut(BaseModel):
+    id: int
+    name: str
+    description: str
+    location: str
+    price: float
+    image_url: str
+    time_slots: List[TimeSlotProvider]
     likes: int 
 
 class TimeSlotBase(BaseModel):
@@ -97,12 +112,12 @@ class ProviderWithActivitiesOut(ProviderOut):
     activities: List[Activity]
 
 class BookingOut(BaseModel):
-    id: int
+    booking_id: int
     activity_id: int
     user_email: EmailStr
-    booking_time: datetime
-    activity_details: Activity
-
+    booking_date: datetime
+    activity_details: ActivityProviderOut
+    is_completed: bool
 class ActivityResponse(BaseModel):
     id: int
     provider_name: str
