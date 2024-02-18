@@ -117,6 +117,7 @@ def activity_completed(booking_id:int,current_provider: models.ActivityProvider 
     if booking.activity.provider_id != current_provider.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the provider of this activity")
     booking.is_completed = True
+    return ("Succesfully marked the activity as completed")
     db.commit()
     db.refresh(booking)
     db

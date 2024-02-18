@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String,Float, TIMESTAMP, text, Table, Fo
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-
 Base = declarative_base()
 
 
@@ -74,6 +73,7 @@ class Booking(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     booking_date = Column(Date, nullable=False)
     payment_id = Column(Integer), ForeignKey("payments.id")
+    is_completed = Column(Boolean, default=False)
     user = relationship("User", back_populates="bookings")
     activity = relationship("Activity", back_populates="bookings")
     time_slot = relationship("TimeSlot", back_populates="bookings")

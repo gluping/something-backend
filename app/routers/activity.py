@@ -38,17 +38,7 @@ def upload_images(images: List[UploadFile]):
 
     return schemas.UploadResponse(url=uploaded_urls)
 
-# def upload_image(image: UploadFile):
-#     if not image.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
-#         raise HTTPException(status_code=400, detail="Unsupported image format")
 
-#     try:
-#         s3 = boto3.client('s3', aws_access_key_id=AWS_SERVER_PUBLIC_KEY, aws_secret_access_key=AWS_SERVER_SECRET_KEY, region_name='us-east-1')
-#         s3.upload_fileobj(image.file, "travelactivity", image.filename)
-#         image_url = f"https://travelactivity.s3.amazonaws.com/{image.filename}"
-#         return schemas.UploadResponse(url=image_url)
-#     except NoCredentialsError:
-#         raise HTTPException(status_code=500, detail="Failed to upload image to S3")
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Activity)
 def create_activity(
@@ -103,8 +93,8 @@ def create_activity(
     )
 
     # Update Elasticsearch index
-    es_client = get_es_client()
-    index_activity(es_client, response_activity)  # Pass the Activity object directly
+    # es_client = get_es_client()
+    # index_activity(es_client, response_activity)  # Pass the Activity object directly
     return response_activity
 
 

@@ -81,6 +81,7 @@ class Booking(BaseModel):
 class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
     time_slots: List[TimeSlotBase]
 
+
     
 
     # Add more fields as needed

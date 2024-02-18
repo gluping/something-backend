@@ -1,7 +1,9 @@
 from elasticsearch import Elasticsearch
 import json
+from config import settings
 
-
+ES_KEY = settings.AWS_SERVER_PUBLIC_KEY
+ES_VAL = settings.AWS_SERVER_SECRET_KEY
 def get_es_client():
 
     es_client = Elasticsearch(
@@ -10,7 +12,7 @@ def get_es_client():
         "https://500328854aa34cfdb32aa3cfa721b8ee.us-central1.gcp.cloud.es.io:443",
 
 
-        api_key=()
+        api_key=("LfJEXo0Bg8CCZaeSTZCE","ucE90FGPTNmGjHjkvTEiag")
 
     )
 
