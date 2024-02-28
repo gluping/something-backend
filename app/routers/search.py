@@ -1,69 +1,69 @@
-from fastapi import HTTPException, APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
-from models import Activity
+from typing import List
+from algoliasearch.search_client import SearchClient
+import models, schemas
 from database import get_db
-from es_utils import get_es_client, search_activities, index_activity
-import logging
+from datetime import time
 
-
-
-
-logger = logging.getLogger(__name__)
-
-# Initialize the Elasticsearch client
-es_client = get_es_client()
-
-# Function to create the Elasticsearch index if it doesn't exist
-def create_index(es_client):
-    index_name = "activities"
-    if not es_client.indices.exists(index=index_name):
-        body = {
-            "mappings": {
-                "properties": {
-                    "name": {"type": "text"},
-                    "location": {"type": "text"},
-                    "description": {"type": "text"}
-                }
-            }
-        }
-        es_client.indices.create(index=index_name, body=body)
-
-# Function to index activities from the database into Elasticsearch
-def index_activities_from_db(db: Session):
-    try:
-        # Retrieve activities from the database
-        activities = db.query(Activity).all()
-        
-        # Index activities into Elasticsearch
-        for activity in activities:
-            index_activity(es_client, activity)
-
-        return {"message": "Activities indexed successfully"}
-    except Exception as e:
-        # Log the error and raise an HTTPException with a 500 status code
-        logger.exception("Error occurred during indexing")
-        raise HTTPException(status_code=500, detail="Failed to index activities")
-
-# Create a router instance for the search endpoints
 router = APIRouter(
-    prefix="/ElasticSearch",
-    tags=['Search']
+    prefix="/algolia",
+    tags=['Algolia Integration']
 )
 
-# Endpoint to search for activities
-@router.get("/search/")
-async def search_endpoint(query: str):
-    try:
-        # Perform search
-        results = search_activities(es_client, query)  # Pass es_client argument
-        return results
-    except Exception as e:
-        # Log the error and raise an HTTPException with a 500 status code
-        logger.exception("Error occurred during search")
-        raise HTTPException(status_code=500, detail="Internal server error")
+# Initialize Algolia client
+algolia_client = SearchClient.create()
+algolia_index = algolia_client.init_index('activities')
+index = algolia_client.init_index('activities')
 
-# Endpoint to index activities from the database into Elasticsearch
-@router.get("/index")
-async def index_activities_handler(db: Session = Depends(get_db)):
-    return index_activities_from_db(db)
+# Function to serialize Activity objects to JSON
+def serialize_activity(activity):
+    serialized_time_slots = [
+        {
+            'id': slot.id,
+            'start_time': slot.start_time.strftime('%H:%M:%S'),  # Convert time to string
+            'end_time': slot.end_time.strftime('%H:%M:%S'),      # Convert time to string
+            'is_available': slot.is_available,
+            'max_capacity': slot.max_capacity
+        }
+        for slot in activity.time_slots
+    ]
+    return {
+        'objectID': str(activity.id),  # Use activity id as objectID
+        'id': activity.id,
+        'name': activity.name,
+        'description': activity.description,
+        'location': activity.location,
+        'price': activity.price,
+        'image_url': activity.image_url,
+        'provider_id': activity.provider_id,
+        'likes': activity.likes,
+        'time_slots': serialized_time_slots
+    }
+
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=List[schemas.Activity])
+def index_activity_in_algolia(db: Session = Depends(get_db)):
+    # Fetch all activities from the database
+    activities = db.query(models.Activity).all()
+    if not activities:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No activities found")
+
+    # Serialize and index each activity in Algolia
+    indexed_activities = []
+    for activity in activities:
+        serialized_activity = serialize_activity(activity)
+        algolia_index.save_object(serialized_activity)
+        indexed_activities.append(serialized_activity)
+
+    return indexed_activities
+@router.get("/search", response_model=List[schemas.Activity])
+def search_activities_in_algolia(
+    query: str,
+):
+    # Search for activities in Algolia
+    response = algolia_index.search(query)
+
+    # Extract and return search results
+    hits = response['hits']
+    return hits
