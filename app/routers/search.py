@@ -17,6 +17,9 @@ algolia_client = SearchClient.create()
 algolia_index = algolia_client.init_index('activities')
 index = algolia_client.init_index('activities')
 
+algolia_index.set_settings({
+    'searchableAttributes': ['name', 'description', 'location'] })
+
 # Function to serialize Activity objects to JSON
 def serialize_activity(activity):
     serialized_time_slots = [
@@ -67,3 +70,20 @@ def search_activities_in_algolia(
     # Extract and return search results
     hits = response['hits']
     return hits
+
+@router.get("/search/suggestions/", response_model=List[str])
+def search_suggestions_in_algolia(
+    query: str,
+):
+    # Perform prefix search for suggestions in Algolia
+    response = algolia_index.search(query, {
+        'attributesToRetrieve': ['name'],  # Retrieve only the 'name' field
+        'hitsPerPage': 5,                   # Limit the number of suggestions
+        'restrictSearchableAttributes': ['name'],  # Search only in the 'name' field
+        'queryType': 'prefixAll',          # Perform prefix search on all words
+    })
+
+    # Extract suggested search terms from response
+    suggestions = [hit['name'] for hit in response['hits']]
+
+    return suggestions
