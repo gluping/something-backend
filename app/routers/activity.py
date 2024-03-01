@@ -1,8 +1,7 @@
 from fastapi import status, File, UploadFile, HTTPException, Depends, APIRouter
 from typing import List
 from sqlalchemy.orm import Session,joinedload
-from es_utils import get_es_client
-from .search import index_activity
+
 import models, schemas, utils
 from oauth2 import get_current_provider
 from database import get_db
