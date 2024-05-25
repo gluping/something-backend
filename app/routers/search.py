@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 # Initialize Algolia client
-algolia_client = SearchClient.create()
+algolia_client = SearchClient.create('4XB1JZZO5E', '029db19a6019d88244aa16887bb8f0e8')
 algolia_index = algolia_client.init_index('activities')
 index = algolia_client.init_index('activities')
 

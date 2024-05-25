@@ -9,10 +9,13 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, nullable=False)
     email = Column(String, nullable=False, unique=True)
+    username = Column(String, nullable=True, unique=True) 
     password = Column(String, nullable=False)
+    profile_pic = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     bookings = relationship("Booking", back_populates="user")
     liked_activities = relationship("UserLikes", back_populates="user")
+    reviews = relationship("Review", back_populates="user")
 
 
   
@@ -78,6 +81,7 @@ class Booking(Base):
     activity = relationship("Activity", back_populates="bookings")
     time_slot = relationship("TimeSlot", back_populates="bookings")
     payments = relationship("Payment", back_populates="bookings")
+    reviews = relationship("Review", back_populates='booking')
 
 class UserLikes(Base):
     __tablename__ = "user_likes"
@@ -89,3 +93,16 @@ class UserLikes(Base):
     # Define relationships
     user = relationship("User", back_populates="liked_activities")
     activity = relationship("Activity", back_populates="liked_by_users")
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    rating = Column(Integer)
+    comment = Column(String, nullable=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="reviews")
+
+    booking_id = Column(Integer, ForeignKey("bookings.id"))
+    booking = relationship("Booking", back_populates="reviews")

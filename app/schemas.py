@@ -8,9 +8,20 @@ from typing import List
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password : str
+    password: str
     confirm_password: str
     
+
+
+
+class UserProfileCreate(BaseModel):
+    email: EmailStr
+    password: str
+    confirm_password: str
+    username: Optional[str] = None
+    profile_pic: Optional[bytes] = None  # Profile picture uploaded as bytes
+    profile_pic_name: Optional[str] = None  # Profile picture file name
+    profile_pic_type: Optional[str] = None  # Profile picture file type (e.g., image/jpeg)
 
 class UserOut(BaseModel):
     id : int
@@ -18,6 +29,16 @@ class UserOut(BaseModel):
     created_at : datetime
     class Config:
         from_attributes = True
+
+
+class UserProfileOut(BaseModel):
+    id: int
+    email : EmailStr
+    created_at : datetime
+    class Config:
+        from_attributes = True
+    username:str
+
 
 class UserLogin(BaseModel):
     email : EmailStr
@@ -99,7 +120,7 @@ class ActivityCreateWithImageURLAndTimeSlots(ActivityCreateWithImageURL):
 
     
 
-    # Add more fields as needed
+   
 
 class Token(BaseModel):
     access_token: str
@@ -118,6 +139,14 @@ class BookingOut(BaseModel):
     booking_date: datetime
     activity_details: ActivityProviderOut
     is_completed: bool
+
+class BookingOutUser(BaseModel):
+    booking_id: int
+    activity_id: int
+    provider_id: int
+    booking_date: datetime
+    activity_details: ActivityProviderOut
+    is_completed: bool
 class ActivityResponse(BaseModel):
     id: int
     provider_name: str
@@ -127,3 +156,39 @@ class ActivityResponse(BaseModel):
     location: str
     image: str
     time_slots: List[Dict[str, Union[int, str, bool]]]
+
+class ReviewBase(BaseModel):
+    rating: int
+    comment: Optional[str]
+
+
+class ReviewCreate(ReviewBase):
+    pass
+
+
+class ReviewOut(ReviewBase):
+    id: int
+    user_id: int
+    booking_id: int
+
+
+
+
+class ActivityUpdateNameDescription(BaseModel):
+    name: str
+    description: str
+
+class ActivityUpdateLocation(BaseModel):
+    location: str
+
+class ActivityUpdatePrice(BaseModel):
+    price: float
+
+class ActivityUpdateImageURL(BaseModel):
+    image_url: str
+
+class TimeSlotUpdate(BaseModel):
+    start_time: datetime
+    end_time: datetime
+    is_available: bool
+    max_capacity: int

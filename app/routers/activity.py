@@ -48,7 +48,7 @@ def create_activity(
     image_url = request_data.image_url
     time_slots = request_data.time_slots
 
-    # Create a new activity record in the database
+    
     activity_dict = request_data.dict(exclude={"image_url", "time_slots"})
     activity_dict["provider_id"] = current_provider.id
     activity_dict["image_url"] = image_url
@@ -58,18 +58,18 @@ def create_activity(
     db.commit()
     db.refresh(new_activity)
 
-    # Add time slots to the database
+    
     for slot in time_slots:
         time_slot = models.TimeSlot(**slot.dict(), activity_id=new_activity.id)
         db.add(time_slot)
 
     db.commit()
 
-    # Fetch the time slots from the database
+    
     new_activity_with_slots = db.query(models.Activity).options(joinedload(models.Activity.time_slots)
     ).filter(models.Activity.id == new_activity.id).first()
 
-    # Map the SQLAlchemy model to Pydantic model
+    
     response_activity = schemas.Activity(
         id=new_activity_with_slots.id,
         name=new_activity_with_slots.name,
@@ -91,9 +91,7 @@ def create_activity(
         ],
     )
 
-    # Update Elasticsearch index
-    # es_client = get_es_client()
-    # index_activity(es_client, response_activity)  # Pass the Activity object directly
+   
     return response_activity
 
 
@@ -104,7 +102,7 @@ def delete_activity(
     db: Session = Depends(get_db),
     current_provider: models.ActivityProvider = Depends(get_current_provider)
 ):
-    # Check if the activity exists and is owned by the current provider
+    
     activity = db.query(models.Activity).filter(
         models.Activity.id == activity_id,
         models.Activity.provider_id == current_provider.id
@@ -115,8 +113,121 @@ def delete_activity(
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
 
-    # Delete the activity
+    
     db.delete(activity)
     db.commit()
 
     return {"message": "Activity deleted successfully"}
+
+
+
+@router.put("/update_name_description/{activity_id}", status_code=status.HTTP_200_OK, response_model=schemas.Activity)
+def update_name_description(
+    activity_id: int,
+    request_data: schemas.ActivityUpdateNameDescription,
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id, models.Activity.provider_id == current_provider.id).first()
+    
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    activity.name = request_data.name
+    activity.description = request_data.description
+    
+    db.commit()
+    db.refresh(activity)
+    
+    return activity
+
+
+@router.put("/update_location/{activity_id}", status_code=status.HTTP_200_OK, response_model=schemas.Activity)
+def update_location(
+    activity_id: int,
+    request_data: schemas.ActivityUpdateLocation,
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id, models.Activity.provider_id == current_provider.id).first()
+    
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    activity.location = request_data.location
+    
+    db.commit()
+    db.refresh(activity)
+    
+    return activity
+
+
+@router.put("/update_price/{activity_id}", status_code=status.HTTP_200_OK, response_model=schemas.Activity)
+def update_price(
+    activity_id: int,
+    request_data: schemas.ActivityUpdatePrice,
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id, models.Activity.provider_id == current_provider.id).first()
+    
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    activity.price = request_data.price
+    
+    db.commit()
+    db.refresh(activity)
+    
+    return activity
+
+
+
+@router.put("/update_image_url/{activity_id}", status_code=status.HTTP_200_OK, response_model=schemas.Activity)
+def update_image_url(
+    activity_id: int,
+    request_data: schemas.ActivityUpdateImageURL,
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id, models.Activity.provider_id == current_provider.id).first()
+    
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    activity.image_url = request_data.image_url
+    
+    db.commit()
+    db.refresh(activity)
+    
+    return activity
+
+
+
+
+@router.put("/update_time_slots/{activity_id}", status_code=status.HTTP_200_OK, response_model=schemas.Activity)
+def update_time_slots(
+    activity_id: int,
+    request_data: List[schemas.TimeSlotUpdate],
+    db: Session = Depends(get_db),
+    current_provider: models.ActivityProvider = Depends(get_current_provider)
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id, models.Activity.provider_id == current_provider.id).first()
+    
+    if not activity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+
+    # Deleting existing time slots
+    db.query(models.TimeSlot).filter(models.TimeSlot.activity_id == activity_id).delete()
+    
+    # Adding new time slots
+    for slot_data in request_data:
+        time_slot = models.TimeSlot(**slot_data.dict(), activity_id=activity_id)
+        db.add(time_slot)
+    
+    db.commit()
+    
+    updated_activity = db.query(models.Activity).options(joinedload(models.Activity.time_slots)).filter(models.Activity.id == activity_id).first()
+    db.refresh(updated_activity)
+    
+    return updated_activity
