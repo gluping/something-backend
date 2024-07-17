@@ -1,26 +1,24 @@
-from fastapi import status, HTTPException,Depends, APIRouter
-
-from starlette.responses import RedirectResponse
-
+from fastapi import FastAPI, status, HTTPException, Depends, APIRouter, Request
 from sqlalchemy.orm import Session
-import models, schemas, utils
+import models, schemas
 from database import get_db
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import Query
 from oauth2 import get_current_user
 from config import settings
 import razorpay
 
+app = FastAPI()
 
 router = APIRouter(
     prefix="/book",
     tags=['Booking']
 )
 
-KEY_ID=settings.RAZORPAY_KEY_ID
-KEY_SECRET= settings.RAZORPAY_KEY_SECRET
-client = razorpay.Client(auth=(KEY_ID,KEY_SECRET))
-
+KEY_ID = settings.RAZORPAY_KEY_ID
+KEY_SECRET = settings.RAZORPAY_KEY_SECRET
+WEBHOOK_SECRET = settings.RAZORPAY_WEBHOOK_SECRET
+client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
 
 
 @router.get("/available_time_slots/{activity_id}")
@@ -38,10 +36,8 @@ async def get_available_time_slots(
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    # Get all time slots associated with the activity
     all_time_slots = db.query(models.TimeSlot).filter(models.TimeSlot.activity_id == activity_id).all()
 
-    # Get booked time slots for the selected date
     booked_time_slots = (
         db.query(models.Booking.time_slot_id)
         .join(models.TimeSlot)
@@ -49,18 +45,15 @@ async def get_available_time_slots(
         .all()
     )
 
-    # Get available time slots for the selected date
     available_time_slots = [
-    slot for slot in all_time_slots 
-    if (
-        slot.id not in [booked[0] for booked in booked_time_slots] and
-        len(slot.bookings) < slot.max_capacity
-    )
-]
-
+        slot for slot in all_time_slots
+        if (
+            slot.id not in [booked[0] for booked in booked_time_slots] and
+            len(slot.bookings) < slot.max_capacity
+        )
+    ]
 
     return {"available_time_slots": available_time_slots}
-
 
 
 @router.post("/")
@@ -76,25 +69,22 @@ def book_activity(
     try:
         db.commit()
         with db.begin():
-           
             booking = models.Booking(
                 activity_id=request_data.activity_id,
                 time_slot_id=request_data.slot_id,
                 user_id=current_user.id,
-                booking_date= request_data.booking_date,
+                booking_date=request_data.booking_date,
                 payment_id=None
             )
             db.add(booking)
-            db.flush()  # Flush to get the booking ID before creating the payment
-            # Create a payment record
+            db.flush()
+
             razorpay_order = create_order(activity.price * 100, request_data.activity_id)
             print(razorpay_order)
             payment = models.Payment(amount=activity.price, status="Pending", order_id=razorpay_order['id'], booking_id=booking.id)
             db.add(payment)
 
-            
     except Exception as e:
-        # Roll back the transaction in case of an error
         db.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -102,13 +92,86 @@ def book_activity(
     return razorpay_order['id']
 
 
+@router.post("/create_order")
+def create_order_endpoint(activity_id: int, db: Session = Depends(get_db)):
+    activity = db.query(models.Activity).get(activity_id)
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    amount = activity.price * 100  # Assuming price is in INR and needs to be in paise
+    order = create_order(amount, activity_id)
+
+    return {"order_id": order['id']}
+
+
 def create_order(amount, activity_id):
     data = {
-        "amount": amount,   
+        "amount": amount,
         "currency": "INR",
-        "receipt": f"order_receipt_{activity_id}",  # Use a unique identifier for each order
-        "payment_capture": 1  # Auto-capture payment when the order is created
+        "receipt": f"order_receipt_{activity_id}",
+        "payment_capture": 1
     }
     order = client.order.create(data=data)
     return order
 
+
+@router.post("/verify_payment")
+async def verify_payment(request: Request, db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse JSON: {str(e)}")
+
+    payment_id = body.get('payment_id')
+    order_id = body.get('order_id')
+    signature = body.get('signature')
+
+    if not payment_id or not order_id or not signature:
+        raise HTTPException(status_code=400, detail="Missing payment_id, order_id, or signature")
+
+    try:
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': order_id,
+            'razorpay_payment_id': payment_id,
+            'razorpay_signature': signature
+        })
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Payment verification failed")
+
+    payment = db.query(models.Payment).filter_by(order_id=order_id).first()
+    if payment:
+        payment.status = "Paid"
+        db.commit()
+
+    return {"status": "Payment verified and booking updated"}
+
+
+@router.post("/webhook", status_code=status.HTTP_200_OK)
+async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
+    body = await request.body()  # Get raw body as bytes
+    json_body = await request.json()  # Parse JSON body for event handling
+
+    received_signature = request.headers.get('X-Razorpay-Signature')
+
+    try:
+        client.utility.verify_webhook_signature(
+            body, received_signature, WEBHOOK_SECRET
+        )
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Webhook signature verification failed")
+
+    event = json_body['event']
+
+    if event == "payment.captured":
+        payment_id = json_body['payload']['payment']['entity']['id']
+        order_id = json_body['payload']['payment']['entity']['order_id']
+
+        payment = db.query(models.Payment).filter_by(order_id=order_id).first()
+        if payment:
+            payment.status = "Paid"
+            db.commit()
+
+    return {"status": "success"}
+
+
+app.include_router(router)

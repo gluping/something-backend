@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     AWS_SERVER_SECRET_KEY: str
     RAZORPAY_KEY_ID: str
     RAZORPAY_KEY_SECRET: str
+    ES_KEY: str
+    ES_VAL: str
 
 
     class Config:
